@@ -6,19 +6,22 @@ const bcrypt = require('bcrypt');
 // import models
 import User from '../models/user';
 
-// POST -> req.body
-// GET -> req.query
+// POST -> req.body <- Put
+// GET -> req.query <- Delete
 
 // Auth Register
 router.post("/register", async (req, res) => {
     
     try {
 
+        const name = req.body.name;
+        const email = req.body.email;
         const password = req.body.password;
         const encriptedPassword = bcrypt.hashSync(password, 10);
+
         const newUser = {
-            name: req.body.name,
-            email: req.body.email,
+            name: name,
+            email: email,
             password: encriptedPassword
         }
 
@@ -41,6 +44,7 @@ router.post("/register", async (req, res) => {
             error: error // esto puede generar fuga de informacion
         };
 
+        console.log(toSend);
         res.status(500).json(toSend);
     }
     

@@ -1,13 +1,12 @@
 // Requires
 const express = require('express');
-
-
-// Instances
-const app = express();
 const mongoose = require("mongoose");
 const morgan = require("morgan");
 const cors = require("cors");
 const colors = require("colors");
+
+// Instances
+const app = express();
 
 //express config
 app.use(morgan("tiny"));
@@ -48,7 +47,7 @@ const options = {
     authSource: "admin"
 };
 
-
+try {
     mongoose.connect(uri, options)
         .then(() => {
             console.log("\n");
@@ -66,5 +65,10 @@ const options = {
             console.log(err);
         }
     );
+} catch (error) {
+    console.log("ERROR CONNECTING MONGO ");
+    console.log(error);
+}
+    
 
 

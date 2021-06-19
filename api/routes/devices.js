@@ -3,34 +3,28 @@ const router = express.Router();
 
 const { checkAuth } = require('../middlewares/authentication');
 
+/*
+ ___  ______________ _____ _      _____ 
+|  \/  |  _  |  _  \  ___| |    /  ___|
+| .  . | | | | | | | |__ | |    \ `--. 
+| |\/| | | | | | | |  __|| |     `--. \
+| |  | \ \_/ / |/ /| |___| |____/\__/ /
+\_|  |_/\___/|___/ \____/\_____/\____/  
+*/
+
 import { async } from 'q';
-/**
- *    _____             .___     .__          
-  /     \   ____   __| _/____ |  |   ______
- /  \ /  \ /  _ \ / __ |/ __ \|  |  /  ___/
-/    Y    (  <_> ) /_/ \  ___/|  |__\___ \ 
-\____|__  /\____/\____ |\___  >____/____  >
-        \/            \/    \/          \/ 
- */
+
 import Device from '../models/device';
 
-/**   _____ __________.___ 
-  /  _  \\______   \   |
- /  /_\  \|     ___/   |
-/    |    \    |   |   |
-\____|__  /____|   |___|
-        \/               */
-
 /* 
-{
-    "newDevice":{
-        "dId":"121212",
-        "name":"HOME",
-        "templateName":"esp32 template",
-        "templateId":"ababab"
-    }
-}
+  ___  ______ _____ 
+ / _ \ | ___ \_   _|
+/ /_\ \| |_/ / | |  
+|  _  ||  __/  | |  
+| | | || |    _| |_ 
+\_| |_/\_|    \___/ 
 */
+
 
 // Llamar todos los dispositivos o uno solo (con el ?id) por el endpoint:
 // localhost:3001/api/device o (device?dId=dkajdkaj)
@@ -39,12 +33,18 @@ router.get("/device", checkAuth, async (req, res) => {
     try {
         const userId = req.userData._id;
 
+        //get devices
         const devices = await Device.find({ userId: userId });
+
+        //mongoose array to js array
+        //devices = JSON.parse(JSON.stringify(devices));
 
         const toSend = {
             status: "success",
             data: devices
         };
+
+        res.json(toSend);
 
     } catch (error) {
         
