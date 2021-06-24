@@ -554,7 +554,11 @@
 
     <!-- DASHBOARD PREVIEW -->
     <div class="row">
-      <div v-for="(widget, index) in widgets" :key="index" :class="[widget.column]">
+      <div 
+        v-for="(widget, index) in widgets" 
+        :key="index" 
+        :class="[widget.column]"
+      >
         <i
           aria-hidden="true"
           class="fa fa-trash text-warning pull-right"
@@ -740,21 +744,6 @@ export default {
         column: "col-6"
       },
       
-      iotButtonConfig: {
-        userId: "userid",
-        selectedDevice: {
-          name: "Home",
-          dId: "8888"
-        },
-        variableFullName: "temperature",
-        text: "send",
-        message: "testing123",
-        variable: "varname",
-        widget: "button",
-        icon: "fa-bath",
-        column: "col-6"
-      },
-
       iotIndicatorConfig: {
         userId: "userid",
         selectedDevice: {
@@ -781,28 +770,13 @@ export default {
         variableFullName: "Pump",
         variable: "var1",
         icon: "fa-sun",
-        column: "col-6",
-        widget: "indicator",
+        column: "col-4",
+        widget: "button",
         class: "danger",
         message: "{'fanstatus': 'stop'}"
       },
 
-      configIndicator: {
-        userId: "userid",
-        selectedDevice: {
-          name: "Home",
-          dId: "8888",
-          templateName: "Power Sensor",
-          templateId: "984237562348756ldksjfh",
-          saverRule: false
-        },
-        variableFullName: "Pump",
-        variable: "var1",
-        icon: "fa-sun",
-        column: "col-6",
-        widget: "indicator",
-        class: "success"          
-      },
+      
     };
   },
 
@@ -929,8 +903,8 @@ export default {
       }
 
       if(this.widgetType=="indicator"){
-        this.configIndicator.variable = this.makeid(10);
-        this.widgets.push(JSON.parse(JSON.stringify(this.configIndicator)));
+        this.iotIndicatorConfig.variable = this.makeid(10);
+        this.widgets.push(JSON.parse(JSON.stringify(this.iotIndicatorConfig)));
       }
     },
 

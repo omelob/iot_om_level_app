@@ -16,6 +16,7 @@
             v-model="newDevice.name"
           />
         </div>
+
         <div class="col-4">
           <base-input 
             label="Device Id" 
@@ -24,6 +25,7 @@
             v-model="newDevice.dId" 
           />
         </div>
+
         <div class="col-4">
           <slot name="label">
             <label>Template</label>
@@ -35,7 +37,8 @@
             class="select-primary"
             style="width:100%"
           >
-            <el-option v-for="template, index in templates"
+            <el-option 
+              v-for="template, index in templates"
               :key="template._id"
               class="text-dark"
               :value="index"
@@ -48,7 +51,7 @@
       <div class="row pull-right">
         <div class="col-12">
           <base-button
-            @click="createNewDevice" 
+            @click="createNewDevice()" 
             type="primary"
             class="mb-3"
             size="lg"
@@ -64,30 +67,47 @@
       <div>
         <h4 class="card-title">Dispositivos</h4>
       </div>
+
         <el-table :data="$store.state.devices">
           <el-table-column label="#" min-width="50" align="center">
             <div slot-scope="{row, $index}">
               {{$index +1}}
             </div>
           </el-table-column>
+
           <el-table-column prop="name" label="Name"></el-table-column>
+
           <el-table-column prop="dId" label="Device Id"></el-table-column>
-          <el-table-column prop="templateName" label="Template"></el-table-column>
+
+          <el-table-column 
+            prop="templateName" 
+            label="Template">
+          </el-table-column>
+
           <el-table-column label="Actions">
             <div slot-scope="{row, $index}">
               
-              <el-tooltip content="Saver Status Indicator" style="margin-right: 10px">
-                <i class="fas fa-database" :class="{'text-success' : row.saverRule, 'text-dark' : !row.saverRule}"></i>
+              <el-tooltip 
+                content="Saver Status Indicator" style="margin-right: 10px">
+                <i 
+                  class="fas fa-database" 
+                  :class="{
+                    'text-success' : row.saverRule.status, 
+                    'text-dark' : !row.saverRule.status
+                  }"
+                ></i>
               </el-tooltip>
+
               <el-tooltip content="Database Saver">
                 <base-switch
-                  @click="updateSaverRuleStatus($index)"
-                  :value="row.saverRule"
+                  @click="updateSaverRuleStatus(row.saverRule)"
+                  :value="row.saverRule.status"
                   type="primary"
                   on-text="On"
                   off-text="Off"
                 ></base-switch>
               </el-tooltip>
+
               <el-tooltip
                 content="Delete"
                 effect="light"
@@ -104,13 +124,14 @@
                   <i class="tim-icons icon-simple-remove"></i>
                 </base-button>
               </el-tooltip>
-            </div>
-            
+            </div>            
           </el-table-column>
         </el-table>
       </card>
     </div>
-    <Json :value="templates" />
+
+    <Json :value="$store.state.selectedDevice" />
+    <Json :value="$store.state.devices"></Json>
     <!-- <pre>
       {{devices}}
     </pre> -->
@@ -121,7 +142,6 @@
 <script>
 import { Table, TableColumn } from 'element-ui';
 import { Select, Option } from 'element-ui';
-
 
 export default {
   middleware: "authenticated",
@@ -144,10 +164,57 @@ export default {
     };
   },
   mounted(){
-    this.$store.dispatch("getDevices");
+    
     this.getTemplates();
   },
   methods: {
+
+    updateSaverRuleStatus(rule) {
+      // se crea una copia de la regla
+      var ruleCopy = JSON.parse(JSON.stringify(rule));
+
+      // se cambia el estado (porque el dato original esta en el store)
+      ruleCopy.status = !ruleCopy.status;
+
+      // se coloca en el objeto toSend
+      const toSend = { rule: ruleCopy };
+
+      // se prepara el header
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token
+        }
+      };
+
+      // se hace la modificacion
+      this.$axios
+        .put("/saver-rule", toSend, axiosHeaders)
+        .then(res => {
+
+          if (res.data.status == "success") {
+
+            this.$store.dispatch("getDevices");
+
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: " Device Saver Status Updated"
+            });
+          }          
+          return;
+          
+        })
+        .catch(e => {
+          console.log(e);
+          this.$notify({
+            type: "danger",
+            icon: "tim-icons icon-alert-circle-exc",
+            message: "Error updating saver rule status"
+          });
+          return;
+        });
+    },
+
     // New device
     createNewDevice() {
 
@@ -233,7 +300,6 @@ export default {
         });
     },
     
-
     // Get templates
     async getTemplates() {
       const axiosHeaders = {
@@ -260,8 +326,9 @@ export default {
       }
     },
 
+    // Delete Device
     deleteDevice(device){
-      const axiosHeader = {
+      const axiosHeaders = {
         headers: {
           token: this.$store.state.auth.token
         },
@@ -269,8 +336,9 @@ export default {
           dId: device.dId
         }
       };
+
       this.$axios
-        .delete("/device", axiosHeader)
+        .delete("/device", axiosHeaders)
         .then(res => {
           if (res.data.status == "success") {
             this.$notify({
@@ -280,7 +348,8 @@ export default {
             });
             this.$store.dispatch("getDevices");
           }
-          
+          $nuxt.$emit("time-to-get-devices");
+          return;
         })
         .catch(e => {
           console.log(e);
@@ -289,13 +358,9 @@ export default {
             icon: "tim-icons icon-alert-circle-exc",
             message: " Error deleting " + device.name
           });
-        })      
+          return;
+        });      
     },
-
-    updateSaverRuleStatus(index){
-      console.log(index);
-      this.devices[index].saverRule = !this.devices[index].saverRule
-    }
   }
 };
 </script>

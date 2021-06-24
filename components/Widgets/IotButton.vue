@@ -18,8 +18,6 @@
 </template>
 
 <script>
-import BaseButton from '../BaseButton.vue';
-
 export default {
     props: ['config'],
     data(){
@@ -57,12 +55,23 @@ export default {
 
             if (!this.sending) {
                 return "text-dark";
-            }        
-            return `text-${this.config.class}`;
-
+            } 
+            
+            if (this.config.class == "success") {
+                return "text-success";
+            }
+            if (this.config.class == "primary") {
+                return "text-primary";
+            }
+            if (this.config.class == "warning") {
+                return "text-warning";
+            }
+            if (this.config.class == "danger") {
+                return "text-danger";
+            }
         }
     }
-}
+};
 </script>
 
 

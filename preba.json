@@ -1,0 +1,11 @@
+$ curl -XPOST -d '{
+  "type": "web_hook",
+  "config": {
+      "url": "http://127.0.0.1:9910",
+      "headers": {"token":"axfw34y235wrq234t4ersgw4t"},
+      "method": "POST"
+  },
+  "description": "web hook resource-1"
+}' --basic -u admin:public 'http://localhost:8081/api/v4/resources'
+ 
+{"data":{"type":"web_hook","id":"resource:b12d3e44","description":"web hook resource-1","config":{"url":"http://127.0.0.1:9910","method":"POST","headers":{"token":"axfw34y235wrq234t4ersgw4t"}}},"code":0}

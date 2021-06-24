@@ -18,7 +18,7 @@ export default {
         };
     },
     mounted(){
-        // /uderId/dId/temperature/sdata 
+        // /userId/dId/temperature/sdata 
         const topic = this.config.userId + "/" + this.config.selectedDevice.dId + "/" + this.config.variable + "/sdata";
         console.log(topic);
         this.$nuxt.$on(topic, this.processReceivedData)
@@ -39,11 +39,23 @@ export default {
             if (!this.value) {
                 return "text-dark";
             }        
-            return `text-${this.config.class}`;
+            
+            if (this.config.class == "success") {
+                return "text-success";
+            }
+            if (this.config.class == "primary") {
+                return "text-primary";
+            }
+            if (this.config.class == "warning") {
+                return "text-warning";
+            }
+            if (this.config.class == "danger") {
+                return "text-danger";
+            }
 
         }
     }
-}
+};
 </script>
 
 
