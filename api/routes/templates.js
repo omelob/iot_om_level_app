@@ -3,7 +3,7 @@ const router = express.Router();
 const { checkAuth } = require('../middlewares/authentication');
 
 // models import
-import Template from '../models/templete';
+import Template from '../models/template';
 
 //get templates
 router.get('/template', checkAuth, async (req, res) => {

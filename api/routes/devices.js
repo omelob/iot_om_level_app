@@ -5,7 +5,8 @@ const axios = require("axios");
 
 import Device from '../models/device';
 import SaverRule from '../models/emqx_saver_rule.js';
-import Template from '../models/templete';
+import Template from '../models/template';
+import AlarmRule from '../models/emqx_alarm_rule.js';
 
 /* 
   ___  ______ _____ 
@@ -36,16 +37,20 @@ router.get("/device", checkAuth, async (req, res) => {
         //mongoose array to js array
         devices = JSON.parse(JSON.stringify(devices));
 
-        //get saver rules
+        //get saver rules de un usuario en particular
         const saverRules = await getSaverRules(userId);
 
         // get templates
         const templates = await getTemplates(userId);
 
+        //get alarm rules
+        const alarmRules = await getAlarmRules(userId);
+        
         // se le agrega a cada device la saverRule correspondiente
         devices.forEach((device, index) => {
             devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
             devices[index].template = templates.filter(template => template._id == device.templateId)[0];
+            devices[index].alarmRules = alarmRules.filter(alarmRule => alarmRule.dId == device.dId);
         });
 
         const toSend = {
@@ -73,7 +78,6 @@ router.get("/device", checkAuth, async (req, res) => {
 router.post("/device", checkAuth, async(req, res) => {
 
     try {
-
         const userId = req.userData._id;
         var newDevice = req.body.newDevice;
 
@@ -93,7 +97,7 @@ router.post("/device", checkAuth, async(req, res) => {
             status: "success"
         }
 
-        return res.json(toSend)
+        return res.json(toSend);
 
     } catch (error) {
         
@@ -193,13 +197,23 @@ ______ _   _ _   _ _____ _____ _____ _____ _   _  _____
 \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
 */
 
+async function getAlarmRules(userId) {
 
+    try {
+        const rules = await AlarmRule.find({ userId: userId });
+        return rules;
+    } catch (error) {
+        return "error";
+    }
+
+}
 
 
 async function selectDevice(userId, dId) {
     
     try {
         const result = await Device.updateMany({ userId: userId }, { selected: false });
+
         const result2 = await Device.updateOne({ dId: dId, userId: userId },{selected: true});
 
         return true;
@@ -250,7 +264,6 @@ async function createSaverRule(userId, dId, status) {
         const rawsql = "SELECT topic, payload FROM \"" + topic + "\" WHERE payload.save = 1";
 
         var newRule = {
-
             rawsql: rawsql,
             actions: [
                 {
