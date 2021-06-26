@@ -13,7 +13,7 @@
             :type="config.class" 
             class="mb-3 pull-right" 
             size="lg"
-        >Add</base-button>
+        >{{config.text}}</base-button>
     </card>
 </template>
 
