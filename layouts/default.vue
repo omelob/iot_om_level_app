@@ -69,6 +69,7 @@
 import PerfectScrollbar from "perfect-scrollbar";
 import "perfect-scrollbar/css/perfect-scrollbar.css";
 import SidebarShare from "@/components/Layout/SidebarSharePlugin";
+
 function hasElement(className) {
   return document.getElementsByClassName(className).length > 0;
 }
@@ -104,7 +105,20 @@ export default {
   data() {
     return {
       sidebarBackground: "primary", //vue|blue|orange|green|red|primary
-      client: null
+      client: null,
+      options:{
+        host: "localhost",
+        port: 8083,
+        endpoint: "/mqtt",
+        clean: true,
+        connectTimeout: 5000,
+        reconnectPeriod: 5000,
+
+        // Certification Information
+        clientId: "web_" + this.$store.state.auth.userData.name + "_" + Math.floor(Math.random() * 1000000 + 1),
+        username: "",
+        password: ""
+      }
     };
   },
 
@@ -114,40 +128,90 @@ export default {
     }
   },
 
+  mounted() {
+    this.$store.dispatch("getNotifications");
+    this.initScrollbar();
+    ;
+    setTimeout(() => {
+      this.startMqttClient()
+    }, 2000);
+  },
+
   beforeDestroy(){
     this.$nuxt.$off("mqtt-sender");
   },
   
   methods: {
 
-    startMqttClient() {
-      const options = {
-        host: "localhost",
-        port: 8083,
-        endpoint: "/mqtt",
-        clean: true, // TRUE = NO PERCISTENCIA
-        connectTimeout: 5000,
-        reconnectPeriod: 5000,
-        // Certification Information
-        clientId: "web_" + this.$store.state.auth.userData.name + "_" + Math.floor(Math.random() * 1000000 + 1),
-        username: "superuser",
-        password: "superuser"
-      };
+    async getMqttCredentials(){
+
+      try {
+
+        const axiosHeaders = {
+          headers: {
+            token: this.$store.state.auth.token
+          }
+        };
+
+        const credentials = await this.$axios.post("/getmqttcredentials", null ,axiosHeaders);
+
+        console.log(credentials.data);
+
+        if(credentials.data.status=="success"){
+          this.options.username = credentials.data.username;
+          this.options.password = credentials.data.password;
+        }
+
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async getMqttCredentialsForReconnection(){
+
+      try {
+
+        const axiosHeaders = {
+          headers: {
+            token: this.$store.state.auth.token
+          }
+        };
+
+        const credentials = await this.$axios.post("/getmqttcredentialsforreconnection", null ,axiosHeaders);
+
+        console.log(credentials.data);
+
+        if(credentials.data.status=="success"){
+          this.client.options.username = credentials.data.username;
+          this.client.options.password = credentials.data.password;
+        }
+
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async startMqttClient() {
+
+      await this.getMqttCredentials();
 
       //ex topic: "userid/did/variableId/sdata"
       const deviceSubscribeTopic = this.$store.state.auth.userData._id + "/+/+/sdata";
       const notifSubscribeTopic = this.$store.state.auth.userData._id + "/+/+/notif";
+
       // URL a donde se conecta
-      const connectUrl = "ws://" + options.host + ":" + options.port + options.endpoint;
+      const connectUrl = "ws://" + this.options.host + ":" + this.options.port + this.options.endpoint;
 
       try {
-        this.client = mqtt.connect(connectUrl, options);
+        this.client = mqtt.connect(connectUrl, this.options);
       } catch (error) {
         console.log(error);
       }
 
       //MQTT CONNECTION SUCCESS
       this.client.on('connect', () => {
+
+        console.log(this.client);
         console.log('Connection succeeded!');
 
         //SDATA SUBSCRIBE
@@ -178,6 +242,7 @@ export default {
 
       this.client.on("reconnect", (error) => {
         console.log("reconnecting:", error);
+        this.getMqttCredentialsForReconnection();
       });
 
       this.client.on('message', (topic, message) => {
@@ -232,13 +297,10 @@ export default {
       }
     }
   },
-  mounted() {
-    this.$store.dispatch("getNotifications");
-    this.initScrollbar();
-    this.startMqttClient();
-  }
+  
 };
 </script>
+
 <style lang="scss">
 $scaleSize: 0.95;
 @keyframes zoomIn95 {
