@@ -138,7 +138,7 @@ export default {
   },
 
   beforeDestroy(){
-    this.$nuxt.$off("mqtt-sender");
+    this.$nuxt.$off("mqtt-sender");    
   },
   
   methods: {

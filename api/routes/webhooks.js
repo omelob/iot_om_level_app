@@ -24,20 +24,24 @@ var client;
 
 // SAVER WEBHOOK
 router.post('/saver-webhook', async (req, res) => {
+    
 
     try {
+        console.log("token -> " + req.headers.token);
         if (req.headers.token != "121212") {
             req.sendStatus(404);
             return;
         }
 
         const data = req.body;
-
+        
         const splittedTopic = data.topic.split("/");
         const dId = splittedTopic[1];
         const variable = splittedTopic[2];
+        
 
-        var result = await Device.find({ did: dId, userId: data.userId });
+        var result = await Device.find({ dId: dId, userId: data.userId });
+        
 
         if (result.length == 1) {
             Data.create({
@@ -247,7 +251,6 @@ function saveNotifToMongo(incomingAlarm) {
     }
     
 }
-
 
 async function updateAlarmCounter(emqxRuleId) {
     try {

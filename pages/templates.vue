@@ -720,6 +720,8 @@ export default {
         },
         variableFullName: "temperature",
         variable: "varname",
+        variableType: "input",
+        variableSendFrec: "30",
         unit: "Watts",
         class: "success",
         column: "col-12",
@@ -738,6 +740,7 @@ export default {
         },
         variableFullName: "Luz",
         variable: "varname",
+        variableType: "output",
         class: "danger",
         widget: "switch",
         icon: "fa-bath",
@@ -752,10 +755,12 @@ export default {
         },
         variableFullName: "temperature",
         variable: "varname",
+        variableType: "input",
+        variableSendFrec: "60",
         class: "success",
         widget: "indicator",
         icon: "fa-bath",
-        column: "col-6"
+        column: "col-4"
       },
       
       configButton: {
@@ -769,6 +774,7 @@ export default {
         },
         variableFullName: "Pump",
         variable: "var1",
+        variableType: "output",
         icon: "fa-sun",
         column: "col-4",
         widget: "button",
