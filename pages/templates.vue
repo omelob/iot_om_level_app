@@ -77,6 +77,14 @@
               <br />
 
               <base-input
+                v-model.number="ncConfig.variableSendFreq"
+                label="Send Freq"
+                type="number"
+              ></base-input>
+
+              <br />
+
+              <base-input
                 v-model.number="ncConfig.chartTimeAgo"
                 label="Chart Back Time (mins)"
                 type="number"
@@ -422,6 +430,14 @@
 
               <br />
 
+              <base-input
+                v-model="iotIndicatorConfig.variableSendFreq"
+                label="Send Freq"
+                type="text"
+              ></base-input>
+
+              <br />
+
               <el-select
                 v-model="iotIndicatorConfig.class"
                 class="select-success"
@@ -687,8 +703,7 @@
       </card>
     </div>
 
-    <!-- JSONS herramienta para mostrar el arreglo de widgets -->
-    <Json :value="widgets"></Json>
+    
   </div>
 </template>
 
@@ -727,8 +742,8 @@ export default {
         column: "col-12",
         decimalPlaces: 2,
         widget: "numberchart",
-        icon: "fa-bath",
-        chartTimeAgo: 1566,
+        icon: "fa-sun",
+        chartTimeAgo: 60,
         demo: true
       },
       
@@ -744,7 +759,7 @@ export default {
         class: "danger",
         widget: "switch",
         icon: "fa-bath",
-        column: "col-6"
+        column: "col-4"
       },
       
       iotIndicatorConfig: {
@@ -843,6 +858,7 @@ export default {
             message: "Template created!"
           });
           this.getTemplates();
+          this.widgets = [];
         }
 
       } catch (error) {
@@ -870,10 +886,23 @@ export default {
       console.log(axiosHeaders);
       try {
         const res = await this.$axios.delete("/template", axiosHeaders);
+        
+        // evalua si una plantilla tiene disp asociados
+        console.log(res.data)
+        if (res.data.status == "fail" && res.data.error == "template in use") {
+          this.$notify({
+            type: "danger",
+            icon: "tim-icons icon-alert-circle-exc",
+            message: template.name + " is in use. First remove the devices linked to the template!"
+          });
+          
+          return;
+        }
+
         if (res.data.status == "success") {
           this.$notify({
             type: "success",
-            icon: "tim-icons icon-alert-circle-exc",
+            icon: "tim-icons icon-check-2",
             message: template.name + " was deleted!"
           });
           

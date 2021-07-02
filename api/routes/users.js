@@ -16,46 +16,49 @@ import EmqxAuthRule from "../models/emqx_auth.js";
 //***********************
 
 // Auth Login
-router.post("/login", async(req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
+router.post("/login", async (req, res) => {
+    
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
 
-    const user = await User.findOne({ email: email });
+        const user = await User.findOne({ email: email });
 
-    // error en el email
-    if (!user) {
-        const toSend = {
-            status: "error",
-            error: "Invalid Credentials"
-        };
-        return res.status(401).json(toSend);        
-    }
-
-    // email y password ok
-    if (bcrypt.compareSync(password, user.password)) {
-        
-        // se elimina el campo psw del user
-        user.set('password', undefined, { strict: false });
-
-        // se genera el token
-        const token = jwt.sign({ userData: user }, 'claveDelToken', {expiresIn: 60*60*24*30});
-
-        const toSend = {
-            status: "success",
-            token: token,
-            userData: user
+        // error en el email
+        if (!user) {
+            const response = {
+                status: "error",
+                error: "Invalid Credentials"
+            };
+            return res.status(401).json(response);        
         }
-        return res.json(toSend);
 
-    } else {
-        const toSend = {
-            status: "error",
-            error: "Invalid Credentials"
-        };
-        return res.status(401).json(toSend);
-    }
+        // email y password ok
+        if (bcrypt.compareSync(password, user.password)) {
+            
+            // se elimina el campo psw del user
+            user.set('password', undefined, { strict: false });
 
-    //res.json({ "status": "success" });
+            // se genera el token
+            const token = jwt.sign({ userData: user }, 'claveDelToken', {expiresIn: 60*60*24*30});
+
+            const response = {
+                status: "success",
+                token: token,
+                userData: user
+            }
+            return res.json(response);
+
+        } else {
+            const response = {
+                status: "error",
+                error: "Invalid Credentials"
+            };
+            return res.status(401).json(response);
+        }
+    } catch (error) {
+        console.log(error);
+    }   
 });
 
 // Auth Register
@@ -78,23 +81,23 @@ router.post("/register", async (req, res) => {
 
         console.log(user);
 
-        const toSend = {
+        const response = {
             status: "success"
         }
 
-        res.status(200).json(toSend);
+        res.status(200).json(response);
 
     } catch (error) {
         console.log("ERROR - REGISTER ENDPOINT");
         console.log(error);
 
-        const toSend = {
+        const response = {
             status: "error",
             error: error // esto puede generar fuga de informacion
         };
 
         console.log(toSend);
-        return res.status(500).json(toSend);
+        return res.status(500).json(response);
     }    
 });
 
@@ -106,13 +109,13 @@ router.post("/getmqttcredentials", checkAuth,  async (req, res) => {
 
         const credentials = await getWebUserMqttCredentials(userId);
 
-        const toSend = {
+        const response = {
             status: "success",
             username: credentials.username,
             password: credentials.password
         }
 
-        res.json(toSend);
+        res.json(response);
 
         setTimeout(() => {
             getWebUserMqttCredentials(userId);
@@ -123,32 +126,36 @@ router.post("/getmqttcredentials", checkAuth,  async (req, res) => {
     } catch (error) {
         console.log(error);
 
-        const toSend = {
+        const response = {
             status: "error"
         };
 
-        return res.status(500).json(toSend);
+        return res.status(500).json(response);
     }
 });
 
 //GET MQTT CREDENTIALS FOR RECONNECTION
 router.post("/getmqttcredentialsforreconnection", checkAuth, async (req, res) => {
 
-    const userId = req.userData._id;
-    const credentials = await getWebUserMqttCredentialsForReconnection(userId);
+    try {
+        const userId = req.userData._id;
+        const credentials = await getWebUserMqttCredentialsForReconnection(userId);
 
-    const toSend = {
-        status: "success",
-        username: credentials.username,
-        password: credentials.password
-    }
+        const response = {
+            status: "success",
+            username: credentials.username,
+            password: credentials.password
+        }
 
-    console.log(toSend);
-    res.json(toSend);
+        console.log(response);
+        res.json(response);
 
-    setTimeout(() => {
-        getWebUserMqttCredentials(userId);
-    }, 15000);
+        setTimeout(() => {
+            getWebUserMqttCredentials(userId);
+        }, 15000);
+    } catch (error) {
+        console.log(error);
+    }    
 });
 
 //***********************
@@ -191,7 +198,7 @@ async function getWebUserMqttCredentials(userId){
         const result = await EmqxAuthRule.updateOne({type:"user", userId: userId}, {$set: {username: newUserName, password: newPassword, updatedTime: Date.now()}});
 
         // update response example
-      //{ n: 1, nModified: 1, ok: 1 }
+        //{ n: 1, nModified: 1, ok: 1 }
 
         if (result.n == 1 && result.ok == 1) {
 
@@ -207,7 +214,6 @@ async function getWebUserMqttCredentials(userId){
         console.log(error);
         return false;
     }
-
 }
 
 async function getWebUserMqttCredentialsForReconnection(userId) {

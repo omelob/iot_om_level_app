@@ -164,6 +164,15 @@ export default {
 
       } catch (error) {
         console.log(error);
+        if (error.response.status == 401) {
+          console.log("NO VALID TOKEN");
+          localStorage.clear();
+
+          const auth = {};
+          this.$store.commit("setAuth", auth);
+
+          window.location.href = "/login";
+        }
       }
     },
 
@@ -188,6 +197,15 @@ export default {
 
       } catch (error) {
         console.log(error);
+        if (error.response.status == 401) {
+          console.log("NO VALID TOKEN");
+          localStorage.clear();
+
+          const auth = {};
+          this.$store.commit("setAuth", auth);
+          
+          window.location.href = "/login";
+        }
       }
     },
 
@@ -238,11 +256,15 @@ export default {
 
       this.client.on('error', error => {
         console.log('Connection failed', error)
-      })
+      });
 
       this.client.on("reconnect", (error) => {
         console.log("reconnecting:", error);
         this.getMqttCredentialsForReconnection();
+      });
+
+      this.client.on("disconnect", error => {
+        console.log("MQTT disconnect EVENT FIRED:", error);
       });
 
       this.client.on('message', (topic, message) => {

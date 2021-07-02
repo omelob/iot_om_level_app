@@ -6,9 +6,7 @@
       :key="index"
       :class="[widget.column]"
 
-    >
-
-    <Json :value="fixWidget(widget)"></Json>
+    >    
 
       <Rtnumberchart
         v-if="widget.widget == 'numberchart'"
@@ -29,7 +27,10 @@
         v-if="widget.widget == 'indicator'"
         :config="fixWidget(widget)"
       ></Iotindicator>
-    </div>
+    </div>    
+  </div>
+  <div v-else>
+    Select a Device...
   </div>
 </template>
 <script>

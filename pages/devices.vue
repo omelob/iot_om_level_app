@@ -79,6 +79,8 @@
 
           <el-table-column prop="dId" label="Device Id"></el-table-column>
 
+          <el-table-column prop="password" label="Device PSW"></el-table-column>
+
           <el-table-column 
             prop="templateName" 
             label="Template">
@@ -130,11 +132,7 @@
       </card>
     </div>
 
-    <Json :value="$store.state.selectedDevice" />
-    <Json :value="$store.state.devices"></Json>
-    <!-- <pre>
-      {{devices}}
-    </pre> -->
+    
     
   </div> 
 </template>

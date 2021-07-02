@@ -8,8 +8,10 @@ const colors = require('colors');
 
 import Data from "../models/data.js";
 import Device from "../models/device.js";
+import EmqxAuthRule from "../models/emqx_auth.js";
 import AlarmRule from "../models/emqx_alarm_rule.js";
 import Notification from "../models/notifications.js";
+import Template from "../models/template.js";
 
 var client;
 
@@ -22,12 +24,96 @@ var client;
 \_| |_/\_|    \___/ 
 */
 
+var ex = {
+    username: 'superuser',
+    password: 'superuser',
+    topic: '5ffcc00149fdcf311a4de607/22222/',
+    variables: [
+        {
+        variable: '6hRtQGSFIl',
+        variableFullName: 'Temperature',
+        variableType: 'input',
+        variableSendFreq: 10
+        },
+        {
+        variable: 'byTmALXl2Y',
+        variableFullName: 'Humidity',
+        variableType: 'input',
+        variableSendFreq: 5
+        },
+        {
+        variable: 'PMHPI0zBNQ',
+        variableFullName: 'Pump',
+        variableType: 'output',
+        variableSendFreq: undefined
+        },
+        {
+        variable: 'yvFApiNOqz',
+        variableFullName: 'Fan',
+        variableType: 'output',
+        variableSendFreq: undefined
+        }
+    ]
+}
+
+//DEVICE CREDENTIALS WEBHOOK
+router.post("/getdevicecredentials", async (req, res) => {
+
+    try {
+        
+        const dId = req.body.dId;
+
+        const password = req.body.password;
+        
+        const device = await Device.findOne({ dId: dId });
+
+        if (password != device.password) {
+            return res.status(401).json();
+        }
+        
+        const userId = device.userId;
+        
+        var credentials = await getDeviceMqttCredentials(dId, userId);
+        var template = await Template.findOne({ _id: device.templateId });
+
+        var variables = [];
+
+        template.widgets.forEach(widget => {
+
+            var v = (({variable, variableFullName, variableType, variableSendFreq }) => ({
+                variable,
+                variableFullName,
+                variableType,
+                variableSendFreq
+            }))(widget);
+
+            variables.push(v);
+        });
+
+        const response = {
+            username: credentials.username,
+            password: credentials.password,
+            topic: userId + "/" + dId + "/",
+            variables: variables
+        };
+
+        res.json(response);
+
+        setTimeout(() => {
+            getDeviceMqttCredentials(dId, userId);
+            console.log("Device Credentials Updated");
+        }, 10000);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }   
+});
+
 // SAVER WEBHOOK
 router.post('/saver-webhook', async (req, res) => {
     
-
     try {
-        console.log("token -> " + req.headers.token);
+        
         if (req.headers.token != "121212") {
             req.sendStatus(404);
             return;
@@ -37,11 +123,9 @@ router.post('/saver-webhook', async (req, res) => {
         
         const splittedTopic = data.topic.split("/");
         const dId = splittedTopic[1];
-        const variable = splittedTopic[2];
-        
+        const variable = splittedTopic[2];        
 
-        var result = await Device.find({ dId: dId, userId: data.userId });
-        
+        var result = await Device.find({ dId: dId, userId: data.userId });        
 
         if (result.length == 1) {
             Data.create({
@@ -58,18 +142,16 @@ router.post('/saver-webhook', async (req, res) => {
     } catch (error) {
         console.log(error);
         res.sendStatus(200);
-    }
-    
-
+    }    
 });
 
-// ALARM WEBHOOK
+// ALARMS WEBHOOK
 router.post("/alarm-webhook", async (req, res) => {
 
     try {
 
         if (req.headers.token != "121212") {
-            req.sendStatus(404);
+            res.sendStatus(404);
             return;
         }
 
@@ -80,7 +162,10 @@ router.post("/alarm-webhook", async (req, res) => {
         updateAlarmCounter(incomingAlarm.emqxRuleId);
 
         // consulta para traer la ultima notificacion
-        const lastNotif = await Notification.find({ dId: incomingAlarm.dId, emqxRuleId: incomingAlarm.emqxRuleId }).sort({ time: -1 }).limit(1);
+        const lastNotif = await Notification.find({
+            dId: incomingAlarm.dId,
+            emqxRuleId: incomingAlarm.emqxRuleId
+        }).sort({ time: -1 }).limit(1);
 
         if (lastNotif == 0) {
             
@@ -97,14 +182,12 @@ router.post("/alarm-webhook", async (req, res) => {
                 saveNotifToMongo(incomingAlarm);
                 sendMqttNotif(incomingAlarm);
             }
-        }
-        
+        }        
 
     }catch (error) {
         console.log(error);
         res.sendStatus(200);
     }
-
 });
 
 //GET NOTIFICATIONS
@@ -115,29 +198,26 @@ router.get("/notifications", checkAuth, async (req, res) => {
 
         const notifications = await getNotifications(userId);
 
-
-
-        const toSend = {
+        const response = {
             status: "success",
             data: notifications
         };
 
-        res.json(toSend);
+        res.json(response);
 
     } catch (error) {
 
         console.log("ERROR GETTING NOTIFICATIONS");
         console.log(error)
 
-        const toSend = {
+        const response = {
             status: "error",
             error: error
         };
 
-        return res.status(500).json(toSend);
+        return res.status(500).json(response);
 
     }
-
 });
 
 //UPDATE NOTIFICATION (readed status)
@@ -150,26 +230,25 @@ router.put("/notifications", checkAuth, async (req, res) => {
 
         await Notification.updateOne({userId: userId, _id: notificationId},{readed: true});
 
-        const toSend = {
+        const response = {
             status: "success",
         };
 
-        res.json(toSend);
+        res.json(response);
 
     } catch (error) {
 
         console.log("ERROR UPDATING NOTIFICATION STATUS");
         console.log(error)
 
-        const toSend = {
+        const response = {
             status: "error",
             error: error
         };
 
-        return res.status(500).json(toSend);
+        return res.status(500).json(response);
 
     }
-
 });
 
 /* 
@@ -181,9 +260,70 @@ ______ _   _ _   _ _____ _____ _____ _____ _   _  _____
 \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
 */
 
+async function getDeviceMqttCredentials(dId, userId) {
+    try {
+        var rule = await EmqxAuthRule.find({
+            type: "device",
+            userId: userId,
+            dId: dId
+        });
+
+        if (rule.length == 0) {
+        const newRule = {
+            userId: userId,
+            dId: dId,
+            username: makeid(10),
+            password: makeid(10),
+            publish: [userId + "/" + dId + "/+/sdata"],
+            subscribe: [userId + "/" + dId + "/+/actdata"],
+            type: "device",
+            time: Date.now(),
+            updatedTime: Date.now()
+        };
+
+        const result = await EmqxAuthRule.create(newRule);
+
+        const toReturn = {
+            username: result.username,
+            password: result.password
+        };
+
+        return toReturn;
+        }
+
+        const newUserName = makeid(10);
+        const newPassword = makeid(10);
+
+        const result = await EmqxAuthRule.updateOne(
+        { type: "device", dId: dId },
+        {
+            $set: {
+            username: newUserName,
+            password: newPassword,
+            updatedTime: Date.now()
+            }
+        }
+        );
+
+    // update response example
+    //{ n: 1, nModified: 1, ok: 1 }
+
+    if (result.n == 1 && result.ok == 1) {
+        return {
+            username: newUserName,
+            password: newPassword
+        };
+        } else {
+        return false;
+        }
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+
 // Cliente de MQTT
 function startMqttClient(){
-
     const options = {
         port: 1883,
         host: 'localhost',
@@ -196,7 +336,7 @@ function startMqttClient(){
         protocolVersion: 3,
         clean: true,
         encoding: 'utf8'
-    }
+    };
 
     client = mqtt.connect ('mqtt://' + 'localhost', options);
 
@@ -248,8 +388,7 @@ function saveNotifToMongo(incomingAlarm) {
     } catch (error) {
         console.log(error);
         return false;
-    }
-    
+    }    
 }
 
 async function updateAlarmCounter(emqxRuleId) {
@@ -257,7 +396,19 @@ async function updateAlarmCounter(emqxRuleId) {
         await AlarmRule.updateOne({ emqxRuleId: emqxRuleId }, { $inc: { counter: 1 } });
     } catch (error) {
         console.log(error);
+        return false;
     }
+}
+
+function makeid(length) {
+    var result = "";
+    var characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
 }
 
 setTimeout(() => {

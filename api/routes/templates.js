@@ -4,6 +4,7 @@ const { checkAuth } = require('../middlewares/authentication');
 
 // models import
 import Template from '../models/template';
+import Device from '../models/device.js';
 
 //get templates
 router.get('/template', checkAuth, async (req, res) => {
@@ -36,7 +37,6 @@ router.get('/template', checkAuth, async (req, res) => {
         return res.status(500).json(response);
 
     }
-
 });
 
 
@@ -76,7 +76,6 @@ router.post('/template', checkAuth, async (req, res) => {
         return res.status(500).json(response);
 
     }
-
 });
 
 //delete template
@@ -86,6 +85,19 @@ router.delete('/template', checkAuth, async (req, res) => {
 
         const userId = req.userData._id;
         const templateId = req.query.templateId;
+
+        // busca si hay disp con esa plantilla
+        const devices = await Device.find({userId: userId, templateId: templateId });
+
+        if (devices.length > 0){
+
+            const response = {
+                status: "fail",
+                error: "template in use"
+            }
+
+            return res.json(response);
+        }
 
         const r = await Template.deleteOne({userId: userId, _id: templateId});
 
@@ -107,7 +119,6 @@ router.delete('/template', checkAuth, async (req, res) => {
         return res.status(500).json(response);
 
     }
-
 });
 
 module.exports = router; 
