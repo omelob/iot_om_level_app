@@ -5,6 +5,8 @@ const morgan = require("morgan");
 const cors = require("cors");
 const colors = require("colors");
 
+require('dotenv').config();
+
 // Instances
 const app = express();
 
@@ -31,17 +33,17 @@ app.use("/api", require("./routes/dataprovider.js"));
 module.exports = app;
 
 // Listener
-app.listen(3001, () => {
-    console.log("API Server listening on port 3001");
+app.listen(process.env.API_PORT, () => {
+    console.log("API Server listening on port " + process.env.API_PORT);
 });
 
 
 //Mongo Connection
-const mongoUserName = "devuser";
-const mongoPassword = "devpassword";
-const mongoHost = "localhost";
-const mongoPort = "27017";
-const mongoDatabase = "iot_om_level";
+const mongoUserName = process.env.MONGO_USERNAME;
+const mongoPassword = process.env.MONGO_PASSWORD;
+const mongoHost = process.env.MONGO_HOST;
+const mongoPort = process.env.MONGO_PORT;
+const mongoDatabase = process.env.MONGO_DATABASE;
 
 var uri = "mongodb://" + mongoUserName + ":" + mongoPassword + "@" +  mongoHost + ":" + mongoPort + "/" + mongoDatabase;
 
