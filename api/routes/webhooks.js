@@ -239,26 +239,26 @@ async function getDeviceMqttCredentials(dId, userId) {
         });
 
         if (rule.length == 0) {
-        const newRule = {
-            userId: userId,
-            dId: dId,
-            username: makeid(10),
-            password: makeid(10),
-            publish: [userId + "/" + dId + "/+/sdata"],
-            subscribe: [userId + "/" + dId + "/+/actdata"],
-            type: "device",
-            time: Date.now(),
-            updatedTime: Date.now()
-        };
+            const newRule = {
+                userId: userId,
+                dId: dId,
+                username: makeid(10),
+                password: makeid(10),
+                publish: [userId + "/" + dId + "/+/sdata"],
+                subscribe: [userId + "/" + dId + "/+/actdata"],
+                type: "device",
+                time: Date.now(),
+                updatedTime: Date.now()
+            };
 
-        const result = await EmqxAuthRule.create(newRule);
+            const result = await EmqxAuthRule.create(newRule);
 
-        const toReturn = {
-            username: result.username,
-            password: result.password
-        };
+            const toReturn = {
+                username: result.username,
+                password: result.password
+            };
 
-        return toReturn;
+            return toReturn;
         }
 
         const newUserName = makeid(10);
@@ -268,31 +268,31 @@ async function getDeviceMqttCredentials(dId, userId) {
         { type: "device", dId: dId },
         {
             $set: {
-            username: newUserName,
-            password: newPassword,
-            updatedTime: Date.now()
+                username: newUserName,
+                password: newPassword,
+                updatedTime: Date.now()
             }
         }
         );
 
-    // update response example
-    //{ n: 1, nModified: 1, ok: 1 }
+        // update response example
+        //{ n: 1, nModified: 1, ok: 1 }
 
-    if (result.n == 1 && result.ok == 1) {
-        return {
-            username: newUserName,
-            password: newPassword
-        };
-        } else {
-        return false;
-        }
+        if (result.n == 1 && result.ok == 1) {
+            return {
+                username: newUserName,
+                password: newPassword
+            };
+            } else {
+                return false;
+            }
     } catch (error) {
         console.log(error);
         return false;
     }
 }
 
-// Cliente de MQTT
+// Cliente superuser de MQTT
 function startMqttClient(){
     const options = {
         port: 1883,

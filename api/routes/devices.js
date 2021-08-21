@@ -265,9 +265,9 @@ async function selectDevice(userId, dId) {
     }    
 }
 
-/**
- * SAVER RULES FUNCTIONS
- */
+/*************************
+ * SAVER RULES FUNCTIONS *
+ *************************/
 
 // get templates
 async function getTemplates(userId) {
@@ -409,21 +409,21 @@ async function deleteAllAlarmRules(userId, dId) {
 // thanks to Sebastien Chopin - Nuxt Creator :)
 // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
 async function asyncForEach(array, callback) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
+    for (let index = 0; index < array.length; index++) {
+        await callback(array[index], index, array);
+    }
 }
 
 //delete ALL emqx device  auth rules
 async function deleteMqttDeviceCredentials(dId) {
-  try {
-    await EmqxAuthRule.deleteMany({ dId: dId, type: "device" });
+    try {
+        await EmqxAuthRule.deleteMany({ dId: dId, type: "device" });
 
-    return true;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
 }
 
 // crea passwords aleatorios
